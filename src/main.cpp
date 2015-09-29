@@ -1,8 +1,37 @@
 #include "Common.h"
 #include "Graphics.h"
+#include "Vertex.h"
+
+Vertex verts[] = {	 { 0.0f, 1.0f, 0.0f,			//x,y,z
+					1.0f, 0.0f, 0.0f, 1.0f },	//r,g,b,a
+
+					{-1.0f, -1.0f, 0.0f, //x,y,z
+					0.0f, 1.0f, 0.0f, 1.0f},  //r,b,g,a
+
+					{1.0f,-1.0f,0.0f, //x,y,z
+					0.0f,0.0f,1.0f,1.0f}  //r,g,b,a
+};
+		
+
+GLuint VBO;
 
 void update()
 {
+}
+
+void initScene()
+{
+	//Create buffer
+	glGenBuffers(1, &VBO);
+	//Make the new VBO active
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	//Copy Vertex Data to VBO
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+}
+
+void cleanUp()
+{
+	glDeleteBuffers(1, &VBO);
 }
 
 void render()
@@ -13,23 +42,28 @@ void render()
     //clear the colour and depth buffer
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    //Swith to ModelView
-    glMatrixMode( GL_MODELVIEW );
-    //Reset using the Indentity Matrix
-    glLoadIdentity( );
-    //Do translation, push the next bit of drawing 'back' 5 units
-    //on z-zaxis
-    //Everyting after this will be drawn at -5.0f on z-axis
-    //until reset by glLoadIdentity!
-    glTranslatef( 0.0f, 0.0f, -5.0f );
+	//Make the new VBO active. Repeat here as a sanity check(may have changed since initialisation
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    //Begin drawing triangles
-    glBegin( GL_TRIANGLES );
-      glColor3f(1.0f, 0.0f, 0.0f); //Colour of the vertices
-      glVertex3f(  0.0f,  1.0f, 0.0f ); // Top
-      glVertex3f( -1.0f, -1.0f, 0.0f ); // Bottom Left
-      glVertex3f(  1.0f, -1.0f, 0.0f ); // Bottom Right
-    glEnd( );
+	//Estabilish its 3 co-ords per vertex with zero stride in array and contain floating point numbers
+	glVertexPointer(3, GL_FLOAT, sizeof(Vertex), NULL);
+
+	glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void**)(3 * sizeof(float)));
+
+	//Estabilish array contains vertices 
+	glEnableClientState(GL_VERTEX_ARRAY); 
+	glEnableClientState(GL_COLOR_ARRAY);
+
+
+	//Switch to ModelView
+	glMatrixMode(GL_MODELVIEW);
+	//Reset using the identity matrix
+	glLoadIdentity();
+	//translate
+	glTranslatef(0.0f, 0.0f, -6.0f);
+	//Actually draw the triangle, given the number of vertices provided
+	glDrawArrays(GL_TRIANGLES, 0, sizeof(verts) / sizeof(Vertex));
+
 
 }
 
@@ -61,6 +95,10 @@ int main(int argc, char * arg[])
     //Initialisation
     //Call our InitOpenGL Function
     initOpenGL();
+
+	initScene();
+
+
     //Set our viewport
     setViewport(640,480);
 
@@ -100,6 +138,7 @@ int main(int argc, char * arg[])
     }
 
     // clean up, reverse order!!!
+	cleanUp();
     SDL_GL_DeleteContext(glcontext);
     SDL_DestroyWindow(window);
     SDL_Quit();
